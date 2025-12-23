@@ -82,8 +82,7 @@ class VideoThread(QThread):
             except Exception as e:
                 print(f"Snapshot error: {e}")
             
-            # Sleep for interval, checking for stop periodically
-            for _ in range(self.interval * 10):  # Check every 0.1s
+            for _ in range(self.interval * 10):
                 if not self.running: 
                     break
                 time.sleep(0.1)
@@ -117,7 +116,7 @@ class SensorThread(QThread):
                     print(f"Sensor data error: {resp.status_code}")
             except Exception as e:
                 print(f"Sensor error: {e}")
-            time.sleep(0.5)  # Update every 0.5 seconds
+            time.sleep(0.5) 
 
 # MAIN INTERFACE
 class CubeSatDashboard(QMainWindow):
@@ -229,7 +228,7 @@ class CubeSatDashboard(QMainWindow):
         self.grid_layout.addWidget(frame, 1, 0)
 
     def setup_camera_feed(self):
-        frame, layout = self.create_card("SNAPSHOT (Every 5s)") # Đổi tên thẻ
+        frame, layout = self.create_card("SNAPSHOT (Every 5s)")
         self.video_label = QLabel("Waiting for snapshot...")
         self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.video_label.setStyleSheet("background-color: #000; border: 1px solid #333;")
