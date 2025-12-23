@@ -1,13 +1,13 @@
 // File: camera_manager.cpp
 #include <Arduino.h>
 #include <esp_camera.h>
-#include "camera_manager.h" // Include file .h tương ứng
+#include "camera_manager.h" 
 
-// --- ĐỊNH NGHĨA CHÂN CAMERA (Chọn đúng model của bạn) ---
+// ĐỊNH NGHĨA CHÂN CAMERA
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
 
-// --- HÀM KHỞI TẠO CAMERA ---
+// HÀM KHỞI TẠO CAMERA
 void initCamera() {
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
@@ -31,9 +31,9 @@ void initCamera() {
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_JPEG; 
 
-    // Cấu hình chất lượng và kích thước ảnh
-    config.frame_size = FRAMESIZE_VGA; // 640x480
-    config.jpeg_quality = 10; // 0-63 (thấp = chất lượng cao)
+    // Config frame
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 10;
     config.fb_count = 1;
 
     // Khởi tạo camera

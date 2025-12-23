@@ -13,15 +13,10 @@
 #define PWMA_PIN 4
 
 
-// ESP32 PWM CONFIGURATION 
-const int PWM_FREQ = 5000; 
-const int PWM_RESOLUTION = 8; 
-const int PWM_CHANNEL_A = 0;
-
 // PID TUNING PARAMETERS
 double Kp = 20.0;  
 double Ki = 0.3;  
-double Kd = 4.5; 
+double Kd = 1.5; 
 
 // BALANCE SETPOINT
 double BALANCE_SETPOINT_DEG = 0.0;
@@ -40,10 +35,10 @@ PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 // Angle calculation variables
 float currentAngle_rad = 0.0;
-float gyroY_cal_rad = 0.0;
+float gyroX_cal_rad = 0.0;
 
 // Loop timing
-const int LOOP_TIME_MS = 10; // 10ms loop time = 100Hz
+const int LOOP_TIME_MS = 10;
 unsigned long lastLoopTime = 0;
 
 // Filter parameters
@@ -58,7 +53,7 @@ void setup() {
   initCamera();
   initWiFi();
   setupWebServer();
-
+  
   // Calibrate Gyro
   calibrateGyro();
   Serial.println("Calibration Complete.");
@@ -70,43 +65,44 @@ void setup() {
   digitalWrite(AIN2, LOW);
   pinMode(PWMA_PIN, OUTPUT);
 
-
   // Stop motors initially
   driveMotors(0);
 
-  // Initialize angle from accelerometer for better startup
+  // Initialize angle from accelerometer
   mpu.getEvent(&a, &g, &temp);
-  float accX = a.acceleration.x;
+  float accY = a.acceleration.y;
   float accZ = a.acceleration.z;
-  currentAngle_rad = atan2(accX, accZ);
+  currentAngle_rad = atan2(accY, accZ);
 
   // Configure PID Controller
   setpoint = BALANCE_SETPOINT_DEG;
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(-255, 255);
   myPID.SetSampleTime(LOOP_TIME_MS);
-
   Serial.println("SETUP COMPLETE");
+  
   lastLoopTime = millis();
+
+
 }
 
-// --- GYRO CALIBRATION ---
+// GYRO CALIBRATION 
 void calibrateGyro() {
   const int numSamples = 1000;
-  double sumY = 0;
+  double sumX = 0;
 
   Serial.print("Calibrating");
   for (int i = 0; i < numSamples; i++) {
     mpu.getEvent(&a, &g, &temp);
-    sumY += g.gyro.y;
+    sumX += g.gyro.x;
     if (i % 100 == 0) Serial.print(".");
     delay(2);
   }
-  gyroY_cal_rad = sumY / numSamples;
+  gyroX_cal_rad = sumX / numSamples;
 
   Serial.println();
-  Serial.print("Gyro Y Offset (rad/s): ");
-  Serial.println(gyroY_cal_rad, 6);
+  Serial.print("Gyro X Offset (rad/s): ");
+  Serial.println(gyroX_cal_rad, 6);
 }
 
 // MOTOR CONTROL FUNCTION
@@ -115,7 +111,7 @@ void driveMotors(int speed) {
     speed = 0;
   }
   
-  int motorSpeed = constrain(speed, -10, 10);
+  int motorSpeed = constrain(speed, -200, 200);
 
   // Motor control
   if (motorSpeed > 0) {
@@ -136,15 +132,25 @@ void driveMotors(int speed) {
   analogWrite(PWMA_PIN, pwmValue);
 }
 
+// SAFETY CHECK FUNCTION
+bool safetyCheck(float angle_deg) {
+  if (abs(angle_deg) > MAX_ANGLE) {
+    Serial.println("Angle too large");
+    driveMotors(0);
+    return false;
+  }
+  return true;
+}
+
 // FIND BALANCE POINT FUNCTION
 void findBalancePoint() {
   Serial.println("FINDING BALANCE POINT");
   
   while (!Serial.available()) {
     mpu.getEvent(&a, &g, &temp);
-    float accX = a.acceleration.x;
+    float accY = a.acceleration.y;
     float accZ = a.acceleration.z;
-    float angle_deg = atan2(accX, accZ) * (180.0 / PI);
+    float angle_deg = atan2(accY, accZ) * (180.0 / PI);
     
     Serial.print("Current Angle: ");
     Serial.print(angle_deg);
@@ -154,15 +160,14 @@ void findBalancePoint() {
   while (Serial.available()) Serial.read(); // Clear buffer
 }
 
-// --- TEST MOTORS FUNCTION ---
+// TEST MOTORS FUNCTION
 void testMotors() {
-  Serial.println("Testing forward direction");
+  Serial.println("TESTING MOTORS");
   driveMotors(100);
   delay(1000);
   driveMotors(0);
   delay(500);
   
-  Serial.println("Testing reverse direction");
   driveMotors(-100);
   delay(1000);
   driveMotors(0);
@@ -179,20 +184,22 @@ void loop() {
   }
   float dt = (now - lastLoopTime) / 1000.0f;
   lastLoopTime = now;
+  
+  loopWebServer();
 
   // Read Sensor Data
   mpu.getEvent(&a, &g, &temp);
 
   // Calculate Angle (Complementary Filter)
-  float gyroY_rad = g.gyro.y - gyroY_cal_rad;
-  float accX = a.acceleration.x;
+  float gyroX_rad = g.gyro.x - gyroX_cal_rad;
+  float accY = a.acceleration.y;
   float accZ = a.acceleration.z;
 
   // Angle from accelerometer (radians)
-  float angleAcc_rad = atan2(accX, accZ);
+  float angleAcc_rad = atan2(accY, accZ);
 
   // Angle from gyroscope (integration)
-  float angleGyro_rad = currentAngle_rad + gyroY_rad * dt;
+  float angleGyro_rad = currentAngle_rad + gyroX_rad * dt;
 
   // Complementary Filter
   currentAngle_rad = GYRO_WEIGHT * angleGyro_rad + ACCEL_WEIGHT * angleAcc_rad;
@@ -201,6 +208,11 @@ void loop() {
   float currentAngle_deg = currentAngle_rad * (180.0 / PI);
   input = currentAngle_deg;
 
+  // Safety check
+  if (!safetyCheck(currentAngle_deg)) {
+    delay(1000);
+    return;
+  }
 
   // Compute PID
   myPID.Compute();
@@ -210,7 +222,7 @@ void loop() {
 
   // Debug Output (less verbose)
   static unsigned long lastDebug = 0;
-  if (now - lastDebug > 100) {
+  if (now - lastDebug > 100) { // Print every 100ms
     Serial.print("Angle: ");
     Serial.print(currentAngle_deg, 1);
     Serial.print("°\tPID: ");
@@ -219,6 +231,4 @@ void loop() {
     Serial.println(abs((int)output));
     lastDebug = now;
   }
-
-  loopWebServer(); 
 }
