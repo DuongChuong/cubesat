@@ -126,7 +126,7 @@ class CubeSatDashboard(QMainWindow):
         self.resize(1200, 800)
         self.setStyleSheet(DARK_THEME)
 
-        self.current_ip = "192.168.52.143" 
+        self.current_ip = "10.11.202.234" 
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
