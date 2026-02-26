@@ -1,13 +1,11 @@
-// File: camera_manager.cpp
 #include <Arduino.h>
 #include <esp_camera.h>
 #include "camera_manager.h" 
 
-// ĐỊNH NGHĨA CHÂN CAMERA
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
 
-// HÀM KHỞI TẠO CAMERA
+// INIT FUNCTION CAMERA
 void initCamera() {
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
@@ -36,7 +34,7 @@ void initCamera() {
     config.jpeg_quality = 10;
     config.fb_count = 1;
 
-    // Khởi tạo camera
+    // Init camera
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
         Serial.printf("Camera init failed with error 0x%x \n", err);

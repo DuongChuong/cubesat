@@ -141,7 +141,7 @@ bool safetyCheck(float angle_deg) {
 
 // FIND BALANCE POINT FUNCTION
 void findBalancePoint() {
-  Serial.println("FINDING BALANCE POINT");
+  Serial.println("balancing point");
   
   while (!Serial.available()) {
     mpu.getEvent(&a, &g, &temp);
@@ -154,7 +154,7 @@ void findBalancePoint() {
     Serial.println(" degrees");
     delay(200);
   }
-  while (Serial.available()) Serial.read(); // Clear buffer
+  while (Serial.available()) Serial.read(); 
 }
 
 // TEST MOTORS FUNCTION
@@ -169,7 +169,6 @@ void testMotors() {
   delay(1000);
   driveMotors(0);
   
-  Serial.println("Motor test complete!");
   delay(1000);
 }
 
@@ -219,7 +218,7 @@ void loop() {
 
   // Debug Output (less verbose)
   static unsigned long lastDebug = 0;
-  if (now - lastDebug > 100) { // Print every 100ms
+  if (now - lastDebug > 100) {
     Serial.print("Angle: ");
     Serial.print(currentAngle_deg, 1);
     Serial.print("°\tPID: ");

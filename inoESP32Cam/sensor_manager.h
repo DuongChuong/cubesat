@@ -1,7 +1,7 @@
 #pragma once
 #include <Adafruit_MPU6050.h>
 
-// Khai báo chân
+// Define pin
 #define I2C_SDA_PIN 14
 #define I2C_SCL_PIN 13
 
@@ -11,6 +11,6 @@
 extern Adafruit_MPU6050 mpu;
 
 
-// Khai báo hàm
+// Init sensor function
 void initSensor();
 String getSensorDataAsJson();

@@ -32,7 +32,6 @@ void handleData() {
 }
 
 void handleRoot() {
-    // Simple status page (optional)
     String html = "<html><body>";
     html += "<h1>ESP32-CAM Dashboard Server</h1>";
     html += "<p>Endpoints:</p>";

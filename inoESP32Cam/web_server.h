@@ -3,7 +3,7 @@
 
 extern WebServer server;
 
-// Khai báo các hàm
+// Define function
 void setupWebServer();
 void loopWebServer();
 void handleRoot();
