@@ -33,4 +33,15 @@ This is cubesat that made by myself
   </tr>
 </table>
 
-## 
+## 2. Software
+To reduce the computational load on the ESP32, a dashboard application was developed to run on a personal computer instead of directly on the ESP32, as is commonly implemented.
+
+Download this [dashboard](dashboard/main.py) to visual data. 
+
+This video demonstrates how the dashboard data changes when interacting with the CubeSat.
+
+<p align="center">
+  <video width="800" controls>
+    <source src="./Images/result.mp4" type="video/mp4">
+  </video>
+</p>
